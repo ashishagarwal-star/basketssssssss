@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shyam Basket Pro</title>
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:sans-serif}
+
+body{
+  background:linear-gradient(135deg,#1e1e2f,#2c2c54);
+  color:white;
+}
+
+/* NAVBAR */
+nav{
+  display:flex;
+  justify-content:space-between;
+  padding:15px 30px;
+  background:rgba(255,255,255,0.1);
+  backdrop-filter:blur(10px);
+}
+
+.logo{font-weight:bold;font-size:20px}
+
+.nav-right button{
+  margin-left:10px;
+}
+
+/* SEARCH */
+.search-box{
+  margin:20px;
+  text-align:center;
+}
+
+.search-box input{
+  padding:10px;
+  width:300px;
+  border-radius:20px;
+  border:none;
+}
+
+/* PRODUCTS */
+.container{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+  gap:20px;
+  padding:20px;
+}
+
+.product{
+  background:rgba(255,255,255,0.1);
+  padding:15px;
+  border-radius:15px;
+  transition:0.3s;
+  position:relative;
+}
+
+.product:hover{
+  transform:scale(1.05);
+}
+
+.wishlist{
+  position:absolute;
+  right:10px;
+  top:10px;
+  cursor:pointer;
+}
+
+.product-img{
+  font-size:50px;
+  text-align:center;
+}
+
+button{
+  padding:8px 12px;
+  border:none;
+  background:#ff9800;
+  color:white;
+  border-radius:5px;
+  cursor:pointer;
+}
+
+/* CART */
+.cart{
+  position:fixed;
+  right:0;
+  top:0;
+  width:320px;
+  height:100%;
+  background:#111;
+  padding:20px;
+  transform:translateX(100%);
+  transition:0.3s;
+  overflow:auto;
+}
+
+.cart.open{transform:translateX(0)}
+
+/* MODAL */
+.modal{
+  position:fixed;
+  top:0;left:0;
+  width:100%;height:100%;
+  background:rgba(0,0,0,0.7);
+  display:none;
+  justify-content:center;
+  align-items:center;
+}
+
+.modal-content{
+  background:white;
+  color:black;
+  padding:20px;
+  border-radius:10px;
+  width:300px;
+}
+
+</style>
+</head>
+
+<body>
+
+<nav>
+  <div class="logo">🧺 Shyam Basket</div>
+  <div class="nav-right">
+    <button onclick="toggleCart()">🛒 <span id="count">0</span></button>
+  </div>
+</nav>
+
+<div class="search-box">
+  <input type="text" placeholder="Search hampers..." onkeyup="search(this.value)">
+</div>
+
+<div class="container" id="products">
+
+  <div class="product" data-name="diwali hamper">
+    <div class="wishlist" onclick="toggleWish(this)">❤️</div>
+    <div class="product-img">🪔</div>
+    <h3>Diwali Hamper</h3>
+    <p>₹1799</p>
+    <button onclick="addToCart('Diwali Hamper',1799)">Add</button>
+  </div>
+
+  <div class="product" data-name="birthday hamper">
+    <div class="wishlist" onclick="toggleWish(this)">❤️</div>
+    <div class="product-img">🎂</div>
+    <h3>Birthday Hamper</h3>
+    <p>₹1999</p>
+    <button onclick="addToCart('Birthday Hamper',1999)">Add</button>
+  </div>
+
+  <div class="product" data-name="luxury basket">
+    <div class="wishlist" onclick="toggleWish(this)">❤️</div>
+    <div class="product-img">🎁</div>
+    <h3>Luxury Basket</h3>
+    <p>₹4999</p>
+    <button onclick="addToCart('Luxury Basket',4999)">Add</button>
+  </div>
+
+</div>
+
+<!-- CART -->
+<div class="cart" id="cart">
+  <h2>Cart</h2>
+  <div id="cartItems"></div>
+  <h3>Total: ₹<span id="total">0</span></h3>
+  <button onclick="openCheckout()">Checkout</button>
+</div>
+
+<!-- CHECKOUT MODAL -->
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <h3>Enter Details</h3>
+    <input id="name" placeholder="Name"><br><br>
+    <input id="phone" placeholder="Phone"><br><br>
+    <button onclick="placeOrder()">Place Order</button>
+  </div>
+</div>
+
+<script>
+
+// DATA
+let cart = JSON.parse(localStorage.getItem("cart")) || [];
+
+// SAVE
+function save(){localStorage.setItem("cart",JSON.stringify(cart))}
+
+// CART TOGGLE
+function toggleCart(){
+  document.getElementById("cart").classList.toggle("open");
+}
+
+// ADD
+function addToCart(name,price){
+  let item = cart.find(i=>i.name===name);
+  if(item) item.qty++;
+  else cart.push({name,price,qty:1});
+  render();
+}
+
+// RENDER
+function render(){
+  let html="",total=0,count=0;
+
+  cart.forEach((i,idx)=>{
+    total+=i.price*i.qty;
+    count+=i.qty;
+
+    html+=`
+    <div>
+      ${i.name} x${i.qty}
+      <button onclick="change(${idx},1)">+</button>
+      <button onclick="change(${idx},-1)">-</button>
+    </div>`;
+  });
+
+  document.getElementById("cartItems").innerHTML=html;
+  document.getElementById("total").textContent=total;
+  document.getElementById("count").textContent=count;
+
+  save();
+}
+
+// CHANGE
+function change(i,d){
+  cart[i].qty+=d;
+  if(cart[i].qty<=0) cart.splice(i,1);
+  render();
+}
+
+// SEARCH
+function search(q){
+  q=q.toLowerCase();
+  document.querySelectorAll(".product").forEach(p=>{
+    p.style.display=p.dataset.name.includes(q)?"block":"none";
+  });
+}
+
+// WISHLIST
+function toggleWish(el){
+  el.style.color = el.style.color==="red"?"white":"red";
+}
+
+// CHECKOUT
+function openCheckout(){
+  document.getElementById("modal").style.display="flex";
+}
+
+// PLACE ORDER
+function placeOrder(){
+  let name=document.getElementById("name").value;
+  let phone=document.getElementById("phone").value;
+
+  let msg=`Order by ${name}%0A`;
+  cart.forEach(i=>{
+    msg+=`${i.name} x${i.qty}%0A`;
+  });
+
+  window.open(`https://wa.me/${phone}?text=${msg}`);
+
+  cart=[];
+  render();
+  document.getElementById("modal").style.display="none";
+}
+
+// INIT
+render();
+
+</script>
+
+</body>
+</html>
